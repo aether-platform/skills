@@ -11,6 +11,7 @@ of a `SKILL.md` (instructions only, no code). Install only the skills you need.
 |-------|------|-------------|
 | `zuul-skill` (Zuul failure triage) | [`skills/zuul-skill/`](skills/zuul-skill/SKILL.md) | A Zuul build, buildset, job or change **has failed**, is flaky or is stuck, and you need the cause. |
 | `zuul-job-authoring` (Zuul job authoring) | [`skills/zuul-job-authoring/`](skills/zuul-job-authoring/SKILL.md) | You need to **add or change** a Zuul job, its parent/nodeset/vars/secrets, or a project's check/gate stanza, and confirm the new config loads and runs. |
+| `emdash-publishing` (EmDash publishing) | [`skills/emdash-publishing/`](skills/emdash-publishing/SKILL.md) | A page (e.g. a privacy policy or terms of use) or a post on an EmDash site must be **added or replaced**, you need to **request** that from the site operator, or you need to **confirm** the change is live. |
 
 ## Zuul skills
 
@@ -74,6 +75,31 @@ Job authoring (`zuul-job-authoring`):
 - Neither covers re-running, enqueueing or dequeueing changes.
 - Tool names follow mcp-zuul. If mcp-zuul renames or removes a tool, update
   both `SKILL.md` files accordingly.
+
+## EmDash skill
+
+`emdash-publishing` covers adding and replacing pages and posts on a site
+built with the [EmDash](https://github.com/emdash-cms/emdash) CMS: how to
+request a replacement from the site operator, how the operator publishes it
+with the `emdash` CLI (backups, revision tokens, draft → publish, images,
+rollback), and how both sides check the public site afterwards.
+
+### Requirements
+
+- Operator side: the site project with the `emdash` package installed (the CLI
+  is `node_modules/.bin/emdash`), and an account on the EmDash instance
+  (`emdash login`, or a token passed from the environment). The skill never
+  writes credentials into files.
+- Requester side: no CMS access is needed; `curl` and a browser are enough for
+  the checks.
+
+### Usage
+
+- "Replace the privacy policy and terms pages with the version at commit
+  `<sha>` of `<repo>`, and confirm they are live."
+- "Write the request to the site operator for the new terms page, with the
+  checks we will use afterwards."
+- "Publish this news post with the two screenshots."
 
 ## Install
 
