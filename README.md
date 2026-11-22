@@ -13,6 +13,7 @@ of a `SKILL.md` (instructions only, no code). Install only the skills you need.
 | `zuul-job-authoring` (Zuul job authoring) | [`skills/zuul-job-authoring/`](skills/zuul-job-authoring/SKILL.md) | You need to **add or change** a Zuul job, its parent/nodeset/vars/secrets, or a project's check/gate stanza, and confirm the new config loads and runs. |
 | `emdash-publishing` (EmDash publishing) | [`skills/emdash-publishing/`](skills/emdash-publishing/SKILL.md) | A page (e.g. a privacy policy or terms of use) or a post on an EmDash site must be **added or replaced**, you need to **request** that from the site operator, or you need to **confirm** the change is live. |
 | `emdash-site-build` (EmDash site build) | [`skills/emdash-site-build/`](skills/emdash-site-build/SKILL.md) | A **whole site** must be built on EmDash (Cloudflare Workers), an existing site **moved** onto it with its old URLs kept, or the public domain **cut over** to it (or rolled back). |
+| `kubernetes-safe-change` (Kubernetes safe change) | [`skills/kubernetes-safe-change/`](skills/kubernetes-safe-change/SKILL.md) | You must **change** something on a Kubernetes cluster (manifests, Helm values, RBAC) or try it on a **throwaway** kind/k3d cluster, and need to be sure of the cluster, predict the rollout, validate, apply, verify and keep the rollback. |
 
 ## Zuul skills
 
@@ -140,6 +141,39 @@ Usage:
   deploy."
 - "Cut www over to the Worker, keep the apex redirecting to www, and give me
   the rollback steps."
+
+## Kubernetes skill
+
+`kubernetes-safe-change` covers changing a Kubernetes cluster as an agent:
+preparing a task-only kubeconfig and proving which cluster it reaches,
+read-only inspection (how the workload was deployed, StorageClass defaults,
+existing failures), predicting the effect by rendering and diffing (which Pod
+templates change; why a ConfigMap change alone does not restart Pods),
+server-side dry-run and admission, applying with `kubectl` / kustomize /
+`helm` and watching the rollout, rollback, least-privilege ServiceAccounts
+proven with `kubectl auth can-i --as`, and disposable kind/k3d clusters with
+stop conditions and clean teardown.
+
+### Requirements
+
+- `kubectl` (kustomize is built in) and, for Helm releases, `helm`. For
+  throwaway clusters, `kind` or `k3d` and a container runtime with free disk
+  space.
+- A kubeconfig for the target cluster, provided for the task. The skill keeps
+  it in the work folder and never writes to `~/.kube/config`.
+- Writes (`apply`, `upgrade`, `rollback`, `delete`) only with the owner's
+  approval for that cluster and change.
+
+### Usage
+
+- "Which cluster does this kubeconfig reach, and is it the dev cluster the
+  infra repo describes? Read-only."
+- "Will this values change restart the scheduler? Render it and tell me which
+  Pods roll."
+- "Apply this kustomization to the staging namespace, watch the rollout and
+  give me the rollback command."
+- "Give the CI job a ServiceAccount that can only patch this Deployment, and
+  prove it cannot exec into Pods or read Secrets."
 
 ## Install
 
