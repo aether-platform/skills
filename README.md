@@ -1,0 +1,111 @@
+# skills
+
+Agent Skills published by AetherPlatform.
+
+Each skill lives in its own directory under [`skills/`](skills/) and consists
+of a `SKILL.md` (instructions only, no code). Install only the skills you need.
+
+## Skills
+
+| Skill | Path | Use it when |
+|-------|------|-------------|
+| `zuul-skill` (Zuul failure triage) | [`skills/zuul-skill/`](skills/zuul-skill/SKILL.md) | A Zuul build, buildset, job or change **has failed**, is flaky or is stuck, and you need the cause. |
+| `zuul-job-authoring` (Zuul job authoring) | [`skills/zuul-job-authoring/`](skills/zuul-job-authoring/SKILL.md) | You need to **add or change** a Zuul job, its parent/nodeset/vars/secrets, or a project's check/gate stanza, and confirm the new config loads and runs. |
+
+## Zuul skills
+
+### How to choose
+
+- Something already ran and went wrong → `zuul-skill`.
+- Nothing exists yet, or the job definition itself is what you are changing →
+  `zuul-job-authoring`.
+- They connect: `zuul-job-authoring` ends by checking config errors and the
+  first build of the new job; if that build fails, continue with `zuul-skill`.
+
+Both are read-only towards Zuul. `zuul-job-authoring` writes only to the
+repository working tree; configuration reaches Zuul through your normal review
+flow.
+
+### Requirements
+
+- An MCP client that supports Agent Skills (for example Claude Code).
+- **[mcp-zuul](https://github.com/imatza-rh/mcp-zuul), installed and
+  registered separately.** This repository does not include or redistribute
+  it. Example for Claude Code:
+
+  ```bash
+  claude mcp add zuul \
+    -e ZUUL_URL=https://zuul.example.com \
+    -e ZUUL_DEFAULT_TENANT=example-tenant \
+    -- uvx mcp-zuul
+  ```
+
+  `ZUUL_URL` and `ZUUL_DEFAULT_TENANT` above are placeholders. If your Zuul
+  needs a token, pass `ZUUL_AUTH_TOKEN` from your environment; do not write it
+  into config files. See the mcp-zuul README for all options.
+
+- **Read-only operation is the default.** mcp-zuul starts with
+  `ZUUL_READ_ONLY=true`, which hides the pipeline-changing tools. The skills
+  assume this and do not call write tools without asking the user.
+
+### Usage
+
+Failure triage (`zuul-skill`):
+
+- "Why did this Zuul build fail? <build URL>"
+- "Change 12345 failed in check. Is it our change or infra?"
+- "Is job `example-unit-tests` flaky?"
+
+Job authoring (`zuul-job-authoring`):
+
+- "Add a lint job for `example-org/example-project` to check and gate, based on
+  what similar projects use."
+- "Write a publish job that uses the registry secret; don't put any secret
+  values in the change."
+- "I pushed the new job. Did the config load and did it run?"
+
+### Scope
+
+- `zuul-skill` covers diagnosis and reporting.
+- `zuul-job-authoring` covers drafting job/project configuration and playbook
+  layout in a repository, and verifying it through MCP after it is proposed.
+  It never writes secret values and does not push configuration to Zuul
+  directly.
+- Neither covers re-running, enqueueing or dequeueing changes.
+- Tool names follow mcp-zuul. If mcp-zuul renames or removes a tool, update
+  both `SKILL.md` files accordingly.
+
+## Install
+
+Point your client at `skills/<name>`: copy (or symlink) that directory into a
+skill directory your client reads. For Claude Code, user-level skills live in
+`~/.claude/skills/<name>/` and project-level skills in `.claude/skills/<name>/`.
+
+```bash
+git clone https://github.com/aether-platform/skills.git
+cd skills
+
+# one skill
+cp -r skills/zuul-skill ~/.claude/skills/
+
+# or several
+cp -r skills/zuul-skill skills/zuul-job-authoring ~/.claude/skills/
+```
+
+The directory name matches the `name` in each skill's frontmatter; keep it
+unchanged when copying.
+
+## History
+
+The two Zuul skills were previously published in
+[aether-platform/zuul-skill](https://github.com/aether-platform/zuul-skill).
+They moved here unchanged (same names, same content); only their location
+changed.
+
+## License
+
+This repository is licensed under the [MIT License](LICENSE).
+
+mcp-zuul is a separate project by Itay Matza, licensed under the
+[Apache License 2.0](https://github.com/imatza-rh/mcp-zuul/blob/main/LICENSE).
+It is referenced here as a dependency only; no code from it is included.
