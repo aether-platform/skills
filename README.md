@@ -14,6 +14,7 @@ of a `SKILL.md` (instructions only, no code). Install only the skills you need.
 | `emdash-publishing` (EmDash publishing) | [`skills/emdash-publishing/`](skills/emdash-publishing/SKILL.md) | A page (e.g. a privacy policy or terms of use) or a post on an EmDash site must be **added or replaced**, you need to **request** that from the site operator, or you need to **confirm** the change is live. |
 | `emdash-site-build` (EmDash site build) | [`skills/emdash-site-build/`](skills/emdash-site-build/SKILL.md) | A **whole site** must be built on EmDash (Cloudflare Workers), an existing site **moved** onto it with its old URLs kept, or the public domain **cut over** to it (or rolled back). |
 | `kubernetes-safe-change` (Kubernetes safe change) | [`skills/kubernetes-safe-change/`](skills/kubernetes-safe-change/SKILL.md) | You must **change** something on a Kubernetes cluster (manifests, Helm values, RBAC) or try it on a **throwaway** kind/k3d cluster, and need to be sure of the cluster, predict the rollout, validate, apply, verify and keep the rollback. |
+| `oam-plane-separation` (OAM plane separation) | [`skills/oam-plane-separation/`](skills/oam-plane-separation/SKILL.md) | A network function's **service** and **OAM** (operations, administration and maintenance) traffic must run on separate interfaces and VRFs in a Kubernetes Pod (Multus + CNI `vrf`), and you need to **prove** they stay separate. |
 
 ## Zuul skills
 
@@ -174,6 +175,40 @@ stop conditions and clean teardown.
   give me the rollback command."
 - "Give the CI job a ServiceAccount that can only patch this Deployment, and
   prove it cannot exec into Pods or read Secrets."
+
+## OAM skill
+
+`oam-plane-separation` covers splitting a network function's traffic into a
+platform plane (`eth0`), a service plane and an OAM plane inside Kubernetes
+Pods: Multus, the CNI `macvlan` and `vrf` plugins and whereabouts, one
+NetworkAttachmentDefinition per interface, per-interface socket binding,
+the isolation checks (interface→VRF, route leaks, reachability including
+ICMP, captures, per-process socket ownership), a negative control without
+the `vrf` plugin, and fault cases.
+
+### How it relates to the Kubernetes skill
+
+- `kubernetes-safe-change` is the general procedure for touching a cluster
+  (context, dry-run, apply, rollout, throwaway clusters).
+- `oam-plane-separation` is the network design and the isolation checks on
+  top of it. Use both when you build the lab or change a NAD.
+
+### Requirements
+
+- A cluster where you may install CNI plugins on the nodes and deploy Multus
+  and whereabouts (a throwaway kind/k3d cluster works for the lab form).
+- An observation container or `kubectl debug` access to the function's
+  network namespace with `ip`, `ss` and `tcpdump`. The observation container
+  needs privileges the function itself must not have; keep them separate.
+
+### Usage
+
+- "Design the NADs and socket bindings so the admin API is only on the OAM
+  VRF and client and upstream traffic stay on the service VRF."
+- "Run the isolation checks on this Pod and the `-novrf` control, and tell me
+  which checks actually detect a missing VRF."
+- "Take the upstream interface down and show that the function fails closed
+  without leaking to OAM or `eth0`."
 
 ## Install
 
